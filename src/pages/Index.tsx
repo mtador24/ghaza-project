@@ -7,7 +7,7 @@ const Index = () => {
 
   useEffect(() => {
     // Redirect to the Home page
-    navigate("/");
+    navigate("/home");
   }, [navigate]);
 
   return (
