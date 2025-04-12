@@ -6,7 +6,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import { Heart, CreditCard } from "lucide-react";
 
 interface DonorsListProps {
   donors: Donor[];
@@ -40,6 +40,12 @@ export function DonorsList({ donors, limit }: DonorsListProps) {
                       <p className="text-sm text-muted-foreground mt-1">
                         "{donor.message}"
                       </p>
+                    )}
+                    {donor.paymentMethod && (
+                      <div className="flex items-center mt-1">
+                        <CreditCard className="h-3 w-3 text-muted-foreground ml-1" />
+                        <span className="text-xs text-muted-foreground">{donor.paymentMethod}</span>
+                      </div>
                     )}
                   </div>
                   <div className="text-right">
