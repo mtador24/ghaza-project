@@ -1,9 +1,8 @@
-
 import { query } from './db';
 
 // دالة لإضافة متبرع جديد أو استخدام متبرع موجود
 export async function findOrCreateDonor(donorData) {
-  const { name, email, phone, country } = donorData;
+  const { name, email, phone } = donorData;
   
   // البحث عن المتبرع بالبريد الإلكتروني إذا كان موجودًا
   if (email) {
@@ -13,10 +12,10 @@ export async function findOrCreateDonor(donorData) {
     );
     
     if (existingDonors.length > 0) {
-      // تحديث اسم المتبرع ورقم الهاتف والبلد إذا تغير
+      // تحديث اسم المتبرع ورقم الهاتف إذا تغير
       await query(
-        `UPDATE donors SET name = ?, phone = ?, country = ? WHERE id = ?`,
-        [name, phone, country, existingDonors[0].id]
+        `UPDATE donors SET name = ?, phone = ? WHERE id = ?`,
+        [name, phone, existingDonors[0].id]
       );
       return existingDonors[0].id;
     }
@@ -24,8 +23,8 @@ export async function findOrCreateDonor(donorData) {
   
   // إنشاء متبرع جديد إذا لم يكن موجودًا
   const result = await query(
-    `INSERT INTO donors (name, email, phone, country) VALUES (?, ?, ?, ?)`,
-    [name, email || null, phone || null, country || null]
+    `INSERT INTO donors (name, email, phone) VALUES (?, ?, ?)`,
+    [name, email || null, phone || null]
   );
   
   return result.insertId;
@@ -33,16 +32,15 @@ export async function findOrCreateDonor(donorData) {
 
 // دالة لإضافة تبرع جديد
 export async function addDonation(donationData) {
-  const { projectId, donorData, amount, notes, paymentMethodId, currency = "USD" } = donationData;
+  const { projectId, donorData, amount, notes } = donationData;
   
   // إيجاد أو إنشاء المتبرع
   const donorId = await findOrCreateDonor(donorData);
   
   // إضافة التبرع
   const result = await query(
-    `INSERT INTO donations (project_id, donor_id, amount, currency, notes, payment_method_id) 
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [projectId, donorId, amount, currency, notes || null, paymentMethodId]
+    `INSERT INTO donations (project_id, donor_id, amount, notes) VALUES (?, ?, ?, ?)`,
+    [projectId, donorId, amount, notes || null]
   );
   
   // تحديث المبلغ المجمع للمشروع

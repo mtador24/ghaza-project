@@ -1,5 +1,4 @@
 
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
@@ -7,53 +6,18 @@ import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectSlider } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
-import { PaymentMethods } from "@/components/payment-methods";
 import { mockProjects } from "@/data/mockData";
-import { Heart, ArrowLeft, CreditCard } from "lucide-react";
-
-// واجهة لطريقة الدفع
-interface PaymentMethod {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-  instructions: string;
-  account_number: string;
-  is_active: boolean;
-}
+import { Heart, ArrowLeft } from "lucide-react";
 
 export default function HomePage() {
   const activeProjects = mockProjects.filter(project => project.isActive);
   const featuredProject = activeProjects[0];
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   
-  // جلب طرق الدفع النشطة من الخادم
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      try {
-        const response = await fetch('/api/payment-methods?active=true');
-        if (response.ok) {
-          const data = await response.json();
-          setPaymentMethods(data);
-        } else {
-          console.error('فشل في جلب طرق الدفع');
-        }
-      } catch (error) {
-        console.error('خطأ في جلب طرق الدفع:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPaymentMethods();
-  }, []);
-  
-  // حساب إجمالي التبرعات في جميع المشاريع
+  // Calculate total raised amount across all projects
   const totalRaised = mockProjects.reduce((sum, project) => sum + project.raised, 0);
   const formattedTotalRaised = totalRaised.toLocaleString('ar-EG');
   
-  // الحصول على جميع المتبرعين عبر جميع المشاريع
+  // Get all donors across all projects
   const recentDonors = mockProjects
     .flatMap(project => project.donors)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -163,28 +127,6 @@ export default function HomePage() {
                 <ProjectCard key={project.id} project={project} />
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Payment Methods Section */}
-        <section className="py-12 md:py-16">
-          <div className="gaza-container">
-            <div className="flex items-center mb-8">
-              <CreditCard className="text-gaza-primary ml-2" size={24} />
-              <h2 className="text-2xl md:text-3xl font-bold">وسائل التبرع</h2>
-            </div>
-            
-            {isLoading ? (
-              <div className="flex justify-center py-10">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gaza-primary"></div>
-              </div>
-            ) : paymentMethods.length > 0 ? (
-              <PaymentMethods methods={paymentMethods} />
-            ) : (
-              <div className="text-center py-8 bg-muted rounded-lg">
-                <p className="text-lg text-muted-foreground">لم يتم إضافة وسائل دفع بعد</p>
-              </div>
-            )}
           </div>
         </section>
 

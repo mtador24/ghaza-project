@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,7 +40,6 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/payment-methods" element={<React.lazy(() => import('./pages/admin/payment-methods'))} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
