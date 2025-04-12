@@ -1,4 +1,3 @@
-
 import { query } from './db';
 
 // دالة لإضافة متبرع جديد أو استخدام متبرع موجود
@@ -101,4 +100,69 @@ export async function getDonationStats() {
     activeProjects: activeProjectsResult[0].active_projects || 0,
     totalProjects: totalProjectsResult[0].total_projects || 0
   };
+}
+
+// دالة للحصول على إحصائيات التبرعات الشهرية لمشروع مع دعم السنوات
+export async function getMonthlyDonationsByYear(projectId = null) {
+  const sql = projectId 
+    ? `SELECT 
+         YEAR(donation_date) as year,
+         MONTH(donation_date) as month_num, 
+         CASE
+           WHEN MONTH(donation_date) = 1 THEN 'يناير'
+           WHEN MONTH(donation_date) = 2 THEN 'فبراير'
+           WHEN MONTH(donation_date) = 3 THEN 'مارس'
+           WHEN MONTH(donation_date) = 4 THEN 'أبريل'
+           WHEN MONTH(donation_date) = 5 THEN 'مايو'
+           WHEN MONTH(donation_date) = 6 THEN 'يونيو'
+           WHEN MONTH(donation_date) = 7 THEN 'يوليو'
+           WHEN MONTH(donation_date) = 8 THEN 'أغسطس'
+           WHEN MONTH(donation_date) = 9 THEN 'سبتمبر'
+           WHEN MONTH(donation_date) = 10 THEN 'أكتوبر'
+           WHEN MONTH(donation_date) = 11 THEN 'نوفمبر'
+           WHEN MONTH(donation_date) = 12 THEN 'ديسمبر'
+         END as month,
+         SUM(amount) as amount 
+       FROM donations 
+       WHERE project_id = ? 
+       GROUP BY YEAR(donation_date), MONTH(donation_date)
+       ORDER BY YEAR(donation_date) DESC, MONTH(donation_date) ASC`
+    : `SELECT 
+         YEAR(donation_date) as year,
+         MONTH(donation_date) as month_num,
+         CASE
+           WHEN MONTH(donation_date) = 1 THEN 'يناير'
+           WHEN MONTH(donation_date) = 2 THEN 'فبراير'
+           WHEN MONTH(donation_date) = 3 THEN 'مارس'
+           WHEN MONTH(donation_date) = 4 THEN 'أبريل'
+           WHEN MONTH(donation_date) = 5 THEN 'مايو'
+           WHEN MONTH(donation_date) = 6 THEN 'يونيو'
+           WHEN MONTH(donation_date) = 7 THEN 'يوليو'
+           WHEN MONTH(donation_date) = 8 THEN 'أغسطس'
+           WHEN MONTH(donation_date) = 9 THEN 'سبتمبر'
+           WHEN MONTH(donation_date) = 10 THEN 'أكتوبر'
+           WHEN MONTH(donation_date) = 11 THEN 'نوفمبر'
+           WHEN MONTH(donation_date) = 12 THEN 'ديسمبر'
+         END as month,
+         SUM(amount) as amount 
+       FROM donations 
+       GROUP BY YEAR(donation_date), MONTH(donation_date)
+       ORDER BY YEAR(donation_date) DESC, MONTH(donation_date) ASC`;
+       
+  const params = projectId ? [projectId] : [];
+  const results = await query(sql, params);
+  
+  // تحويل النتائج إلى صيغة مناسبة للرسم البياني
+  return results.map(row => ({
+    year: row.year.toString(),
+    month: row.month,
+    amount: row.amount
+  }));
+}
+
+// دالة للحصول على السنوات التي تحتوي على تبرعات
+export async function getDonationYears() {
+  const sql = `SELECT DISTINCT YEAR(donation_date) as year FROM donations ORDER BY year DESC`;
+  const results = await query(sql);
+  return results.map(row => row.year.toString());
 }

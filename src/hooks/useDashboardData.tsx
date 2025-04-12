@@ -10,7 +10,7 @@ export interface DashboardData {
   totalGoal: number;
   raisedPercentage: number;
   projectStatusData: { name: string; value: number }[];
-  monthlyDonationsData: { month: string; amount: number }[];
+  monthlyDonationsData: { month: string; amount: number; year: string }[];
   recentProjects: any[];
 }
 
@@ -36,8 +36,8 @@ export function useDashboardData() {
         { name: "مشاريع منتهية", value: totalProjects - activeProjects }
       ];
       
-      // Get monthly donations data
-      const monthlyDonationsData = getMonthlyDonationsData();
+      // Get monthly donations data with years
+      const monthlyDonationsData = getMonthlyDonationsByYear();
       
       setData({
         totalProjects,
@@ -71,26 +71,56 @@ export function useDashboardData() {
   return { data, isLoading, refreshData };
 }
 
-// Helper function to get monthly donations data
-function getMonthlyDonationsData() {
+// Helper function to get monthly donations data with years
+function getMonthlyDonationsByYear() {
   const months = [
     "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
     "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
   ];
   
-  // Create a map to hold monthly donation amounts
-  const monthlyDonations = new Map(months.map(month => [month, 0]));
+  // جمع كل التبرعات مع السنوات
+  const donationsByYearAndMonth = new Map();
   
-  // Calculate total donations for each month
   mockProjects.forEach(project => {
     project.donors.forEach(donor => {
       const donationDate = new Date(donor.date);
+      const year = donationDate.getFullYear().toString();
       const monthName = months[donationDate.getMonth()];
-      monthlyDonations.set(monthName, monthlyDonations.get(monthName)! + donor.amount);
+      const key = `${year}-${monthName}`;
+      
+      // إضافة التبرع إلى الشهر والسنة المناسبين
+      if (!donationsByYearAndMonth.has(key)) {
+        donationsByYearAndMonth.set(key, { 
+          month: monthName, 
+          year: year, 
+          amount: 0 
+        });
+      }
+      
+      // تحديث المبلغ
+      const currentData = donationsByYearAndMonth.get(key);
+      currentData.amount += donor.amount;
+      donationsByYearAndMonth.set(key, currentData);
     });
   });
   
-  // Convert the map to an array of objects for Recharts
-  return Array.from(monthlyDonations.entries())
-    .map(([month, amount]) => ({ month, amount }));
+  // تحويل البيانات إلى مصفوفة
+  const result = Array.from(donationsByYearAndMonth.values());
+
+  // Ensure all months are included for each year
+  const years = [...new Set(result.map(item => item.year))];
+  
+  const completeData = [];
+  years.forEach(year => {
+    months.forEach(month => {
+      const existingData = result.find(item => item.year === year && item.month === month);
+      if (existingData) {
+        completeData.push(existingData);
+      } else {
+        completeData.push({ month, year, amount: 0 });
+      }
+    });
+  });
+  
+  return completeData;
 }
