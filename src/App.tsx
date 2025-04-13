@@ -18,6 +18,7 @@ import AdminLoginPage from "./pages/admin/login";
 import AdminDashboardPage from "./pages/admin/dashboard";
 import AdminProjectsListPage from "./pages/admin/projects";
 import CreateProjectPage from "./pages/admin/projects/create";
+import EditProjectPage from "./pages/admin/projects/edit";
 import AdminDonorsListPage from "./pages/admin/donors";
 import AdminPaymentMethodsPage from "./pages/admin/payment-methods";
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/projects" element={<AdminProjectsListPage />} />
             <Route path="/admin/projects/create" element={<CreateProjectPage />} />
+            <Route path="/admin/projects/edit/:id" element={<EditProjectPage />} />
             <Route path="/admin/donors" element={<AdminDonorsListPage />} />
             <Route path="/admin/payment-methods" element={<AdminPaymentMethodsPage />} />
             
