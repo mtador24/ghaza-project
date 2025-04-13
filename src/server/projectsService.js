@@ -1,5 +1,11 @@
 
 import { query } from './db';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // دالة للحصول على جميع المشاريع النشطة
 export async function getActiveProjects() {
@@ -59,6 +65,43 @@ export async function createProject(projectData, userId) {
   return result.insertId;
 }
 
+// دالة لرفع صور المشروع
+export async function uploadProjectImages(projectId, images, mainImageIndex = 0) {
+  // إنشاء مجلد لتخزين الصور إذا لم يكن موجودًا
+  const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'projects');
+  
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  const uploadResults = [];
+  
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+    const isMain = i === parseInt(mainImageIndex);
+    
+    // إنشاء اسم ملف فريد باستخدام معرف المشروع والطابع الزمني
+    const filename = `project_${projectId}_${Date.now()}_${i}${path.extname(image.originalname)}`;
+    const filePath = path.join(uploadsDir, filename);
+    
+    // حفظ الصورة إلى المجلد
+    await fs.promises.writeFile(filePath, image.buffer);
+    
+    // تخزين بيانات الصورة في قاعدة البيانات
+    const imageUrl = `/uploads/projects/${filename}`;
+    const result = await addProjectImage(projectId, imageUrl, isMain);
+    
+    uploadResults.push({
+      id: result.insertId,
+      projectId,
+      imageUrl,
+      isMain
+    });
+  }
+  
+  return uploadResults;
+}
+
 // دالة لتحديث بيانات مشروع
 export async function updateProject(projectId, projectData) {
   const { title, description, goal, startDate, endDate, isActive } = projectData;
@@ -110,4 +153,17 @@ export async function getMonthlyDonations(projectId = null) {
        
   const params = projectId ? [projectId] : [];
   return await query(sql, params);
+}
+
+// دالة للحصول على قائمة المشاريع للوحة الإدارة
+export async function getAdminProjects() {
+  return await query(
+    `SELECT p.*, 
+     (SELECT image_url FROM project_images WHERE project_id = p.id AND is_main = 1 LIMIT 1) as main_image,
+     (SELECT COUNT(*) FROM donations WHERE project_id = p.id) as donations_count,
+     u.name as creator_name
+     FROM projects p 
+     LEFT JOIN users u ON p.created_by = u.id
+     ORDER BY p.created_at DESC`
+  );
 }

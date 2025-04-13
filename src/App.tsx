@@ -16,6 +16,8 @@ import ContactPage from "./pages/contact";
 // Admin Pages
 import AdminLoginPage from "./pages/admin/login";
 import AdminDashboardPage from "./pages/admin/dashboard";
+import AdminProjectsListPage from "./pages/admin/projects";
+import CreateProjectPage from "./pages/admin/projects/create";
 
 // 404 Page
 import NotFound from "./pages/NotFound";
@@ -40,6 +42,8 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/projects" element={<AdminProjectsListPage />} />
+            <Route path="/admin/projects/create" element={<CreateProjectPage />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
