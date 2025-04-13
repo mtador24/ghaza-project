@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS donations (
   FOREIGN KEY (donor_id) REFERENCES donors(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول إثباتات الدفع
+CREATE TABLE IF NOT EXISTS payment_proofs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  donor_id INT NOT NULL,
+  donation_id INT NOT NULL,
+  image_url VARCHAR(255) NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (donor_id) REFERENCES donors(id) ON DELETE CASCADE,
+  FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- إنشاء مستخدم أدمن افتراضي (كلمة المرور: admin123)
 -- ملاحظة: كلمة المرور هنا مشفرة بواسطة bcrypt وستحتاج لاستبدالها عند التطبيق الفعلي
 INSERT INTO users (username, password, name, role) 

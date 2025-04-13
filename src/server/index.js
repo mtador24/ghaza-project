@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -8,6 +7,8 @@ import { testConnection } from './db.js';
 import * as projectsService from './projectsService.js';
 import * as donationsService from './donationsService.js';
 import * as authService from './authService.js';
+import * as donorsService from './donorsService.js';
+import fs from 'fs';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -172,6 +173,93 @@ app.post('/api/admin/projects/:id/images', authenticateToken, upload.array('proj
     }
     
     res.status(201).json({ message: 'تم إضافة الصور بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Donors endpoints
+app.get('/api/admin/donors', authenticateToken, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    
+    const result = await donorsService.getDonors(page, limit, search);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/donors/:id', authenticateToken, async (req, res) => {
+  try {
+    const donorId = req.params.id;
+    const donor = await donorsService.getDonorDetails(donorId);
+    
+    if (!donor) {
+      return res.status(404).json({ error: 'المتبرع غير موجود' });
+    }
+    
+    res.json(donor);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/donors/:id', authenticateToken, async (req, res) => {
+  try {
+    const donorId = req.params.id;
+    const { name, email, phone } = req.body;
+    
+    await donorsService.updateDonor(donorId, { name, email, phone });
+    res.json({ message: 'تم تحديث بيانات المتبرع بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admin/donors/:id', authenticateToken, async (req, res) => {
+  try {
+    const donorId = req.params.id;
+    await donorsService.deleteDonor(donorId);
+    res.json({ message: 'تم حذف المتبرع بنجاح' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/donors/:id/payment-proof', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const donorId = req.params.id;
+    const { donationId, notes } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'يرجى تحميل صورة إثبات الدفع' });
+    }
+    
+    // إنشاء مجلد لتخزين الصور إذا لم يكن موجودًا
+    const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'payments');
+    
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // إنشاء اسم ملف فريد
+    const filename = `payment_${donorId}_${Date.now()}${path.extname(req.file.originalname)}`;
+    const filePath = path.join(uploadsDir, filename);
+    
+    // حفظ الصورة
+    await fs.promises.writeFile(filePath, req.file.buffer);
+    
+    // تخزين بيانات إثبات الدفع في قاعدة البيانات
+    const imageUrl = `/uploads/payments/${filename}`;
+    await donorsService.addPaymentProof(donorId, donationId, imageUrl, notes);
+    
+    res.status(201).json({ 
+      message: 'تم إضافة إثبات الدفع بنجاح',
+      imageUrl
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
