@@ -3,10 +3,10 @@ import mysql from 'mysql2/promise';
 
 // إعداد متغيرات الاتصال بقاعدة البيانات
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'gaza_aid_platform',
+  host: process.env.DB_HOST || 'mysql.hostinger.com',
+  user: process.env.DB_USER || 'u632677766_s7s',
+  password: process.env.DB_PASSWORD || 'p>O6X[Uzjve&X#Wa',
+  database: process.env.DB_NAME || 'u632677766_gaza_aid_plat',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

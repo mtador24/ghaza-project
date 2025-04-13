@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
@@ -6,23 +7,56 @@ import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectSlider } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
-import { mockProjects } from "@/data/mockData";
+import { getProjects, getLatestDonations, getDonationStats } from "@/api/projectsApi";
 import { Heart, ArrowLeft } from "lucide-react";
 
 export default function HomePage() {
-  const activeProjects = mockProjects.filter(project => project.isActive);
-  const featuredProject = activeProjects[0];
+  const [projects, setProjects] = useState([]);
+  const [recentDonors, setRecentDonors] = useState([]);
+  const [stats, setStats] = useState({ totalDonations: 0, totalDonors: 0, activeProjects: 0 });
+  const [loading, setLoading] = useState(true);
   
-  // Calculate total raised amount across all projects
-  const totalRaised = mockProjects.reduce((sum, project) => sum + project.raised, 0);
-  const formattedTotalRaised = totalRaised.toLocaleString('ar-EG');
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [projectsData, donorsData, statsData] = await Promise.all([
+          getProjects(),
+          getLatestDonations(5),
+          getDonationStats()
+        ]);
+        
+        setProjects(projectsData);
+        
+        // Transform donors data
+        const transformedDonors = donorsData.map(donor => ({
+          id: donor.id,
+          name: donor.donor_name,
+          amount: donor.amount,
+          date: donor.donation_date,
+          message: donor.notes || null
+        }));
+        
+        setRecentDonors(transformedDonors);
+        setStats(statsData);
+      } catch (error) {
+        console.error("Error fetching home data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, []);
   
-  // Get all donors across all projects
-  const recentDonors = mockProjects
-    .flatMap(project => project.donors)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
+  // Filter active projects
+  const activeProjects = projects.filter(project => project.is_active);
+  const featuredProject = activeProjects.length > 0 ? activeProjects[0] : null;
+  
+  // Transform featured project for components
+  const featuredProjectImages = featuredProject ? 
+    [{ url: featuredProject.main_image, alt: featuredProject.title }] : [];
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -54,18 +88,18 @@ export default function HomePage() {
                 <div className="bg-white p-6 rounded-lg shadow-lg text-gaza-primary">
                   <div className="text-center mb-4">
                     <h2 className="text-2xl font-bold">إجمالي التبرعات</h2>
-                    <p className="text-3xl md:text-4xl font-bold mt-2">{formattedTotalRaised} $</p>
+                    <p className="text-3xl md:text-4xl font-bold mt-2">
+                      {stats.totalDonations.toLocaleString('ar-EG')} $
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div className="bg-muted rounded-lg p-3">
                       <h3 className="font-medium text-foreground">عدد المشاريع</h3>
-                      <p className="text-xl font-bold">{mockProjects.length}</p>
+                      <p className="text-xl font-bold">{stats.activeProjects}</p>
                     </div>
                     <div className="bg-muted rounded-lg p-3">
                       <h3 className="font-medium text-foreground">عدد المتبرعين</h3>
-                      <p className="text-xl font-bold">
-                        {mockProjects.reduce((sum, project) => sum + project.donors.length, 0)}
-                      </p>
+                      <p className="text-xl font-bold">{stats.totalDonors}</p>
                     </div>
                   </div>
                 </div>
@@ -75,7 +109,12 @@ export default function HomePage() {
         </section>
 
         {/* Featured Project Section */}
-        {featuredProject && (
+        {loading ? (
+          <section className="py-12 text-center">
+            <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
+            <p className="mt-4 text-lg">جاري تحميل البيانات...</p>
+          </section>
+        ) : featuredProject ? (
           <section className="py-12 md:py-16">
             <div className="gaza-container">
               <div className="flex items-center mb-8">
@@ -85,7 +124,7 @@ export default function HomePage() {
               
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3">
-                  <ProjectSlider images={featuredProject.images} />
+                  <ProjectSlider images={featuredProjectImages} />
                   <div className="mt-6">
                     <h3 className="text-xl font-bold mb-3">{featuredProject.title}</h3>
                     <p className="text-muted-foreground">{featuredProject.description}</p>
@@ -102,12 +141,12 @@ export default function HomePage() {
                 </div>
                 
                 <div className="lg:col-span-2">
-                  <DonorsList donors={featuredProject.donors} limit={3} />
+                  <DonorsList donors={recentDonors} limit={3} />
                 </div>
               </div>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Active Projects Section */}
         <section className="py-12 md:py-16 bg-muted">
@@ -122,11 +161,18 @@ export default function HomePage() {
               </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeProjects.slice(0, 3).map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
+                <p className="mt-4">جاري تحميل المشاريع...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeProjects.slice(0, 3).map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

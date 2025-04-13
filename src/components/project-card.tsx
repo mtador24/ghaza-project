@@ -1,7 +1,6 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Project } from "@/data/mockData";
 import { 
   Card, 
   CardContent, 
@@ -13,7 +12,15 @@ import {
 import { Progress } from "@/components/ui/progress";
 
 interface ProjectCardProps {
-  project: Project;
+  project: {
+    id: number;
+    title: string;
+    description: string;
+    goal: number;
+    raised: number;
+    is_active: boolean;
+    main_image?: string;
+  };
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
@@ -21,15 +28,20 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const formattedRaised = project.raised.toLocaleString('ar-EG');
   const formattedGoal = project.goal.toLocaleString('ar-EG');
   
+  // Prepare a short description (first 100 characters)
+  const shortDescription = project.description.length > 100 
+    ? project.description.substring(0, 100) + '...'
+    : project.description;
+  
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
       <div className="relative aspect-video overflow-hidden">
         <img 
-          src={project.images[0]?.url || "https://images.unsplash.com/photo-1469571486292-b5051fe9f386"} 
-          alt={project.images[0]?.alt || project.title}
+          src={project.main_image || "https://images.unsplash.com/photo-1469571486292-b5051fe9f386"} 
+          alt={project.title}
           className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
         />
-        {project.isActive && (
+        {project.is_active && (
           <div className="absolute top-2 left-2 bg-gaza-primary text-white text-xs px-2 py-1 rounded-full">
             مشروع نشط
           </div>
@@ -38,7 +50,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">{project.title}</CardTitle>
-        <CardDescription>{project.shortDescription}</CardDescription>
+        <CardDescription>{shortDescription}</CardDescription>
       </CardHeader>
       
       <CardContent className="flex-grow">
@@ -51,10 +63,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div className="text-sm text-muted-foreground text-left">
             {percentRaised}%
           </div>
-        </div>
-        
-        <div className="mt-4 text-sm text-muted-foreground">
-          <p>عدد المتبرعين: {project.donors.length}</p>
         </div>
       </CardContent>
       

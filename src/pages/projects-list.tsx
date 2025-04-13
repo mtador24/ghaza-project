@@ -1,9 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
-import { mockProjects } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
@@ -13,18 +12,44 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { getProjects } from "@/api/projectsApi";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProjectsListPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all"); // all, active, completed
+  const [filter, setFilter] = useState("all"); 
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
-  const filteredProjects = mockProjects.filter(project => {
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        setLoading(true);
+        const data = await getProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        toast({
+          title: "خطأ",
+          description: "فشل في تحميل المشاريع، يرجى المحاولة مرة أخرى",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchProjects();
+  }, [toast]);
+  
+  const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filter === "all") return matchesSearch;
-    if (filter === "active") return matchesSearch && project.isActive;
-    if (filter === "completed") return matchesSearch && !project.isActive;
+    if (filter === "active") return matchesSearch && project.is_active;
+    if (filter === "completed") return matchesSearch && !project.is_active;
     
     return matchesSearch;
   });
@@ -70,7 +95,12 @@ export default function ProjectsListPage() {
           </div>
           
           {/* Projects Grid */}
-          {filteredProjects.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
+              <p className="mt-4 text-lg">جاري تحميل المشاريع...</p>
+            </div>
+          ) : filteredProjects.length === 0 ? (
             <div className="text-center py-12">
               <h2 className="text-xl font-medium mb-2">لا توجد مشاريع مطابقة</h2>
               <p className="text-muted-foreground">

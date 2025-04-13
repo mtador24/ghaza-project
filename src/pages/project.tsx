@@ -6,33 +6,81 @@ import { Footer } from "@/components/footer";
 import { ProjectSlider } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
 import { DonationProgress } from "@/components/donation-progress";
-import { mockProjects, Project } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar } from "lucide-react";
+import { getProjectById } from "@/api/projectsApi";
+import { useToast } from "@/hooks/use-toast";
+
+// Define interface for project data
+interface ProjectData {
+  id: number;
+  title: string;
+  description: string;
+  goal: number;
+  raised: number;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  images: Array<{
+    id: number;
+    image_url: string;
+    is_main: boolean;
+  }>;
+  donations: Array<{
+    id: number;
+    amount: number;
+    donation_date: string;
+    notes: string;
+    donor_name: string;
+  }>;
+}
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
+  const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   useEffect(() => {
-    // Simulate API fetch with a timeout
-    const timer = setTimeout(() => {
-      const foundProject = mockProjects.find(p => p.id === Number(id));
-      
-      if (foundProject) {
-        setProject(foundProject);
-        setLoading(false);
-      } else {
+    async function fetchProject() {
+      try {
+        setLoading(true);
+        const data = await getProjectById(id!);
+        setProject(data);
+      } catch (err) {
+        console.error("Error fetching project:", err);
         setError("المشروع غير موجود");
+        toast({
+          title: "خطأ",
+          description: "فشل في تحميل بيانات المشروع",
+          variant: "destructive",
+        });
+      } finally {
         setLoading(false);
       }
-    }, 500);
+    }
     
-    return () => clearTimeout(timer);
-  }, [id]);
+    if (id) {
+      fetchProject();
+    }
+  }, [id, toast]);
+  
+  // Transform project images for ProjectSlider component
+  const projectImages = project?.images?.map(image => ({
+    url: image.image_url,
+    alt: project.title
+  })) || [];
+  
+  // Transform donations for DonorsList component
+  const donors = project?.donations?.map(donation => ({
+    id: donation.id,
+    name: donation.donor_name,
+    amount: donation.amount,
+    date: donation.donation_date,
+    message: donation.notes
+  })) || [];
   
   if (loading) {
     return (
@@ -89,9 +137,9 @@ export default function ProjectPage() {
             <h1 className="text-2xl md:text-3xl font-bold">{project.title}</h1>
             <div className="flex items-center mt-2 text-sm text-muted-foreground">
               <Calendar size={16} className="ml-1" />
-              <span>تاريخ البدء: {new Date(project.startDate).toLocaleDateString('ar-EG')}</span>
+              <span>تاريخ البدء: {new Date(project.start_date).toLocaleDateString('ar-EG')}</span>
               <span className="mx-2">•</span>
-              <span>تاريخ الانتهاء: {new Date(project.endDate).toLocaleDateString('ar-EG')}</span>
+              <span>تاريخ الانتهاء: {project.end_date ? new Date(project.end_date).toLocaleDateString('ar-EG') : 'غير محدد'}</span>
             </div>
           </div>
           
@@ -99,7 +147,7 @@ export default function ProjectPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               {/* Project Images */}
-              <ProjectSlider images={project.images} />
+              <ProjectSlider images={projectImages} />
               
               {/* Project Description */}
               <Card>
@@ -129,7 +177,7 @@ export default function ProjectPage() {
               />
               
               {/* Donors List */}
-              <DonorsList donors={project.donors} />
+              <DonorsList donors={donors} />
               
               {/* Back to Projects */}
               <div className="text-center">
