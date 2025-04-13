@@ -9,9 +9,7 @@ import {
   Search,
   ChevronDown,
   ImagePlus,
-  AlertCircle,
-  Star,
-  StarOff
+  AlertCircle  
 } from "lucide-react";
 
 import { AuthMiddleware } from "@/components/admin/auth-middleware";
@@ -44,7 +42,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { updateProjectFeatured } from "@/api/projectsApi";
 
 interface Project {
   id: number;
@@ -52,7 +49,6 @@ interface Project {
   goal: number;
   raised: number;
   is_active: boolean;
-  is_featured?: boolean;
   start_date: string;
   end_date: string | null;
   main_image: string | null;
@@ -135,33 +131,6 @@ export default function ProjectsListPage() {
     }
   };
   
-  const handleToggleFeature = async (projectId: number, isFeatured: boolean) => {
-    try {
-      await updateProjectFeatured(projectId, !isFeatured);
-      
-      toast({
-        title: !isFeatured ? "تم التمييز" : "تم إلغاء التمييز",
-        description: !isFeatured ? "تم تمييز المشروع بنجاح" : "تم إلغاء تمييز المشروع بنجاح",
-      });
-      
-      // تحديث القائمة المحلية
-      setProjects(prevProjects => 
-        prevProjects.map(project => 
-          project.id === projectId 
-            ? { ...project, is_featured: !isFeatured } 
-            : project
-        )
-      );
-    } catch (error) {
-      console.error("Error toggling featured status:", error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحديث حالة التمييز",
-        variant: "destructive",
-      });
-    }
-  };
-  
   // Format date to be more readable
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -222,7 +191,6 @@ export default function ProjectsListPage() {
                   <TableHead className="text-center">المبلغ المستهدف</TableHead>
                   <TableHead className="text-center">المبلغ المجموع</TableHead>
                   <TableHead className="text-center">الحالة</TableHead>
-                  <TableHead className="text-center">مميز</TableHead>
                   <TableHead className="text-center">تاريخ البدء</TableHead>
                   <TableHead className="text-center">المنشئ</TableHead>
                   <TableHead className="text-center">الإجراءات</TableHead>
@@ -231,14 +199,14 @@ export default function ProjectsListPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-10">
+                    <TableCell colSpan={8} className="text-center py-10">
                       <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-8 h-8 animate-spin"></div>
                       <p className="mt-2">جاري تحميل البيانات...</p>
                     </TableCell>
                   </TableRow>
                 ) : filteredProjects.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-10">
+                    <TableCell colSpan={8} className="text-center py-10">
                       <AlertCircle className="mx-auto h-10 w-10 text-muted-foreground" />
                       <p className="mt-2">لا توجد مشاريع للعرض</p>
                     </TableCell>
@@ -277,23 +245,6 @@ export default function ProjectsListPage() {
                         <Badge variant={project.is_active ? "default" : "secondary"}>
                           {project.is_active ? "نشط" : "غير نشط"}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleToggleFeature(project.id, !!project.is_featured)}
-                        >
-                          {project.is_featured ? (
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          ) : (
-                            <StarOff className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="sr-only">
-                            {project.is_featured ? "إلغاء التمييز" : "تمييز المشروع"}
-                          </span>
-                        </Button>
                       </TableCell>
                       <TableCell className="text-center">
                         {formatDate(project.start_date)}

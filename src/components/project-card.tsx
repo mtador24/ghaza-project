@@ -10,7 +10,6 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Star } from "lucide-react";
 
 interface ProjectCardProps {
   project: {
@@ -20,7 +19,6 @@ interface ProjectCardProps {
     goal: number;
     raised: number;
     is_active: boolean;
-    is_featured?: boolean;
     main_image?: string;
   };
 }
@@ -36,7 +34,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     : project.description;
   
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col ${project.is_featured ? 'featured-project-card' : ''}`}>
+    <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
       <div className="relative aspect-video overflow-hidden">
         <img 
           src={project.main_image || "https://images.unsplash.com/photo-1469571486292-b5051fe9f386"} 
@@ -46,11 +44,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
         {project.is_active && (
           <div className="absolute top-2 left-2 bg-gaza-primary text-white text-xs px-2 py-1 rounded-full">
             مشروع نشط
-          </div>
-        )}
-        {project.is_featured && (
-          <div className="featured-badge">
-            <Star className="w-3 h-3 inline-block mr-1" /> مميز
           </div>
         )}
       </div>

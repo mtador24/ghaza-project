@@ -129,10 +129,10 @@ app.post('/api/admin/projects', authenticateToken, upload.array('projectImages',
 });
 
 // Update project
-app.put('/api/admin/projects/:id', authenticateToken, upload.array('projectImages', 10), async (req, res) => {
+app.put('/api/admin/projects/:id', authenticateToken, async (req, res) => {
   try {
     const projectId = req.params.id;
-    const { title, description, goal, startDate, endDate, isActive, mainImageIndex } = req.body;
+    const { title, description, goal, startDate, endDate, isActive } = req.body;
     
     await projectsService.updateProject(
       projectId,
@@ -146,33 +146,7 @@ app.put('/api/admin/projects/:id', authenticateToken, upload.array('projectImage
       }
     );
     
-    // Upload project images if any
-    if (req.files && req.files.length > 0) {
-      await projectsService.uploadProjectImages(projectId, req.files, mainImageIndex);
-    }
-    
     res.json({ message: 'تم تحديث المشروع بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// New endpoint to update project featured status
-app.patch('/api/admin/projects/:id/featured', authenticateToken, async (req, res) => {
-  try {
-    const projectId = req.params.id;
-    const { is_featured } = req.body;
-    
-    if (typeof is_featured !== 'boolean') {
-      return res.status(400).json({ error: 'يرجى تقديم قيمة صحيحة لحالة التمييز' });
-    }
-    
-    await projectsService.updateProjectFeatured(projectId, is_featured);
-    
-    res.json({ 
-      message: is_featured ? 'تم تمييز المشروع بنجاح' : 'تم إلغاء تمييز المشروع بنجاح',
-      is_featured
-    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

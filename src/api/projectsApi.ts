@@ -31,34 +31,3 @@ export async function getMonthlyDonations(projectId?: string | number) {
   const response = await axios.get(url);
   return response.data;
 }
-
-// إضافة دالة جديدة لتحديث المشروع
-export async function updateProject(id: string | number, projectData: FormData) {
-  const token = localStorage.getItem('gaza-admin-token');
-  
-  const response = await axios.put(`${API_BASE_URL}/admin/projects/${id}`, projectData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-  
-  return response.data;
-}
-
-// إضافة دالة جديدة لتحديث خاصية المشروع المميز
-export async function updateProjectFeatured(id: string | number, isFeatured: boolean) {
-  const token = localStorage.getItem('gaza-admin-token');
-  
-  const response = await axios.patch(`${API_BASE_URL}/admin/projects/${id}/featured`, 
-    { is_featured: isFeatured },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
-  
-  return response.data;
-}

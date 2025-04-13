@@ -14,7 +14,7 @@ export async function getActiveProjects() {
      (SELECT image_url FROM project_images WHERE project_id = p.id AND is_main = 1 LIMIT 1) as main_image 
      FROM projects p 
      WHERE p.is_active = 1 
-     ORDER BY p.is_featured DESC, p.created_at DESC`
+     ORDER BY p.created_at DESC`
   );
 }
 
@@ -114,16 +114,6 @@ export async function updateProject(projectId, projectData) {
   );
 }
 
-// دالة جديدة لتحديث حالة مشروع مميز
-export async function updateProjectFeatured(projectId, isFeatured) {
-  return await query(
-    `UPDATE projects 
-     SET is_featured = ? 
-     WHERE id = ?`,
-    [isFeatured, projectId]
-  );
-}
-
 // دالة لحذف مشروع
 export async function deleteProject(projectId) {
   return await query(
@@ -174,6 +164,6 @@ export async function getAdminProjects() {
      u.name as creator_name
      FROM projects p 
      LEFT JOIN users u ON p.created_by = u.id
-     ORDER BY p.is_featured DESC, p.created_at DESC`
+     ORDER BY p.created_at DESC`
   );
 }
