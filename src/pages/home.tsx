@@ -6,8 +6,9 @@ import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectSlider, SliderImage } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
+import { PaymentMethodsList } from "@/components/payment-methods-list";
 import { getProjects, getLatestDonations, getDonationStats } from "@/api/projectsApi";
-import { Heart, ArrowLeft } from "lucide-react";
+import { Heart, ArrowLeft, CreditCard } from "lucide-react";
 
 export default function HomePage() {
   const [projects, setProjects] = useState([]);
@@ -177,6 +178,18 @@ export default function HomePage() {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Payment Methods Section */}
+        <section className="py-12 md:py-16">
+          <div className="gaza-container">
+            <div className="flex items-center mb-8">
+              <CreditCard className="text-gaza-primary ml-2" size={24} />
+              <h2 className="text-2xl md:text-3xl font-bold">طرق الدفع المتاحة</h2>
+            </div>
+            
+            <PaymentMethodsList />
           </div>
         </section>
 
