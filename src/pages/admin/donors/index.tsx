@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -162,6 +161,10 @@ export default function AdminDonorsListPage() {
     return items;
   };
 
+  // Check if we're on the first or last page for pagination navigation
+  const isFirstPage = pagination.page === 1;
+  const isLastPage = pagination.page === pagination.totalPages;
+
   return (
     <AuthMiddleware>
       <div className="flex flex-col min-h-screen">
@@ -264,19 +267,37 @@ export default function AdminDonorsListPage() {
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(Math.max(1, pagination.page - 1))}
-                        disabled={pagination.page === 1}
-                      />
+                      {isFirstPage ? (
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          disabled 
+                          className="cursor-not-allowed opacity-50"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span className="sr-only">Previous page</span>
+                        </Button>
+                      ) : (
+                        <PaginationPrevious onClick={() => handlePageChange(pagination.page - 1)} />
+                      )}
                     </PaginationItem>
                     
                     {renderPaginationItems()}
                     
                     <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(Math.min(pagination.totalPages, pagination.page + 1))}
-                        disabled={pagination.page === pagination.totalPages}
-                      />
+                      {isLastPage ? (
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          disabled 
+                          className="cursor-not-allowed opacity-50"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                          <span className="sr-only">Next page</span>
+                        </Button>
+                      ) : (
+                        <PaginationNext onClick={() => handlePageChange(pagination.page + 1)} />
+                      )}
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
@@ -285,14 +306,12 @@ export default function AdminDonorsListPage() {
           </Card>
         </main>
         
-        {/* نافذة تفاصيل المتبرع */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             {selectedDonor && <DonorDetails donorId={selectedDonor} />}
           </DialogContent>
         </Dialog>
         
-        {/* نافذة تأكيد الحذف */}
         <Dialog 
           open={deleteConfirmDonorId !== null} 
           onOpenChange={(open) => !open && setDeleteConfirmDonorId(null)}
