@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
-import { ProjectSlider } from "@/components/project-slider";
+import { ProjectSlider, SliderImage } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
 import { getProjects, getLatestDonations, getDonationStats } from "@/api/projectsApi";
 import { Heart, ArrowLeft } from "lucide-react";
@@ -54,8 +53,13 @@ export default function HomePage() {
   const featuredProject = activeProjects.length > 0 ? activeProjects[0] : null;
   
   // Transform featured project for components
-  const featuredProjectImages = featuredProject ? 
-    [{ url: featuredProject.main_image, alt: featuredProject.title }] : [];
+  const featuredProjectImages: SliderImage[] = featuredProject ? 
+    [{ 
+      id: 1, 
+      projectId: featuredProject.id,
+      url: featuredProject.main_image, 
+      alt: featuredProject.title 
+    }] : [];
   
   return (
     <div className="flex flex-col min-h-screen">

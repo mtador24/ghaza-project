@@ -2,10 +2,17 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProjectImage } from "@/data/mockData";
+
+// Create a simpler image interface for the slider that matches what we're passing
+export interface SliderImage {
+  id?: number;
+  projectId?: number;
+  url: string;
+  alt: string;
+}
 
 interface ProjectSliderProps {
-  images: ProjectImage[];
+  images: SliderImage[];
   autoSlideInterval?: number;
 }
 
@@ -49,7 +56,7 @@ export function ProjectSlider({ images, autoSlideInterval = 5000 }: ProjectSlide
       <div className="relative aspect-video overflow-hidden">
         {images.map((image, index) => (
           <div
-            key={image.id}
+            key={image.id || index}
             className={`absolute inset-0 transition-opacity duration-500 ${
               index === currentIndex ? "opacity-100" : "opacity-0"
             }`}

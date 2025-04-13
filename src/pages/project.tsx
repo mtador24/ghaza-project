@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { ProjectSlider } from "@/components/project-slider";
+import { ProjectSlider, SliderImage } from "@/components/project-slider";
 import { DonorsList } from "@/components/donors-list";
 import { DonationProgress } from "@/components/donation-progress";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,9 @@ export default function ProjectPage() {
   }, [id, toast]);
   
   // Transform project images for ProjectSlider component
-  const projectImages = project?.images?.map(image => ({
+  const projectImages: SliderImage[] = project?.images?.map(image => ({
+    id: image.id,
+    projectId: project.id,
     url: image.image_url,
     alt: project.title
   })) || [];
