@@ -19,6 +19,7 @@ import AdminDashboardPage from "./pages/admin/dashboard";
 import AdminProjectsListPage from "./pages/admin/projects";
 import CreateProjectPage from "./pages/admin/projects/create";
 import AdminDonorsListPage from "./pages/admin/donors";
+import AdminPaymentMethodsPage from "./pages/admin/payment-methods";
 
 // 404 Page
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/admin/projects" element={<AdminProjectsListPage />} />
             <Route path="/admin/projects/create" element={<CreateProjectPage />} />
             <Route path="/admin/donors" element={<AdminDonorsListPage />} />
+            <Route path="/admin/payment-methods" element={<AdminPaymentMethodsPage />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

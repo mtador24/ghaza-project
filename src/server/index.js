@@ -8,6 +8,7 @@ import * as projectsService from './projectsService.js';
 import * as donationsService from './donationsService.js';
 import * as authService from './authService.js';
 import * as donorsService from './donorsService.js';
+import * as paymentMethodsService from './paymentMethodsService.js';
 import fs from 'fs';
 
 const app = express();
@@ -306,6 +307,91 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Payment Methods endpoints
+app.get('/api/payment-methods', async (req, res) => {
+  try {
+    const paymentMethods = await paymentMethodsService.getAllPaymentMethods();
+    res.json(paymentMethods);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/payment-methods/:id', async (req, res) => {
+  try {
+    const paymentMethod = await paymentMethodsService.getPaymentMethodById(req.params.id);
+    if (!paymentMethod) {
+      return res.status(404).json({ error: 'طريقة الدفع غير موجودة' });
+    }
+    res.json(paymentMethod);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/payment-methods', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const { name, address } = req.body;
+    
+    if (!name || !address || !req.file) {
+      return res.status(400).json({ error: 'يرجى توفير جميع البيانات المطلوبة' });
+    }
+    
+    const result = await paymentMethodsService.createPaymentMethod(
+      { name, address },
+      req.file.buffer,
+      req.file.originalname
+    );
+    
+    res.status(201).json({
+      message: 'تم إضافة طريقة الدفع بنجاح',
+      id: result.id,
+      imageUrl: result.imageUrl
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/payment-methods/:id', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const { name, address } = req.body;
+    const id = req.params.id;
+    
+    if (!name || !address) {
+      return res.status(400).json({ error: 'يرجى توفير جميع البيانات المطلوبة' });
+    }
+    
+    let result;
+    if (req.file) {
+      result = await paymentMethodsService.updatePaymentMethod(
+        id,
+        { name, address },
+        req.file.buffer,
+        req.file.originalname
+      );
+    } else {
+      result = await paymentMethodsService.updatePaymentMethod(id, { name, address });
+    }
+    
+    res.json({
+      message: 'تم تحديث طريقة الدفع بنجاح',
+      ...result
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admin/payment-methods/:id', authenticateToken, async (req, res) => {
+  try {
+    await paymentMethodsService.deletePaymentMethod(req.params.id);
+    res.json({ message: 'تم حذف طريقة الدفع بنجاح' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
