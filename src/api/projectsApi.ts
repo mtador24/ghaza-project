@@ -15,8 +15,13 @@ export async function getProjects() {
 }
 
 export async function getProjectById(id: string | number) {
-  const response = await axios.get(`${API_BASE_URL}/projects/${id}`);
-  return response.data;
+  try {
+    const response = await axios.get(`${API_BASE_URL}/projects/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching project ${id}:`, error);
+    return null;
+  }
 }
 
 export async function getLatestDonations(limit = 5) {
@@ -57,4 +62,29 @@ export async function getMonthlyDonations(projectId?: string | number) {
     console.error("Error fetching monthly donations:", error);
     return []; // Return empty array on error
   }
+}
+
+export async function getLastDonationInfo() {
+  try {
+    const donations = await getLatestDonations(1);
+    if (donations.length > 0) {
+      return {
+        daysSince: calculateDaysSince(donations[0].donation_date),
+        donorName: donations[0].donor_name
+      };
+    }
+    return { daysSince: 0, donorName: '' };
+  } catch (error) {
+    console.error("Error getting last donation info:", error);
+    return { daysSince: 0, donorName: '' };
+  }
+}
+
+// Helper function to calculate days since a donation
+function calculateDaysSince(donationDate: string) {
+  const donation = new Date(donationDate);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - donation.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
 }

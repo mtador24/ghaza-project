@@ -58,7 +58,11 @@ export function StatsOverview({
           </div>
           <div className="flex items-center mt-4 text-xs">
             <span className="text-gaza-secondary font-medium">
-              متوسط التبرع: {(totalRaised / totalDonors).toLocaleString('ar-EG')} $
+              {totalDonors > 0 && totalRaised > 0 ? (
+                `متوسط التبرع: ${Math.round(totalRaised / totalDonors).toLocaleString('ar-EG')} $`
+              ) : (
+                'لا توجد تبرعات بعد'
+              )}
             </span>
           </div>
         </CardContent>
@@ -88,17 +92,19 @@ export function StatsOverview({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <div>
+            <div id="last-donation-info">
               <p className="text-sm text-muted-foreground">آخر تبرع</p>
-              <h3 className="text-2xl font-bold mt-1">منذ 3 أيام</h3>
+              <h3 className="text-2xl font-bold mt-1" id="last-donation-days">
+                جاري التحميل...
+              </h3>
             </div>
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
               <Calendar className="text-foreground" size={24} />
             </div>
           </div>
           <div className="flex items-center mt-4 text-xs">
-            <span className="text-muted-foreground">
-              آخر متبرع: سارة علي
+            <span className="text-muted-foreground" id="last-donor-name">
+              جاري تحميل البيانات...
             </span>
           </div>
         </CardContent>

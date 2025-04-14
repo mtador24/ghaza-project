@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { AuthMiddleware } from "@/components/admin/auth-middleware";
 import { AdminNavbar } from "@/components/admin/admin-navbar";
 import { DashboardHeader } from "@/components/admin/dashboard/dashboard-header";
@@ -9,9 +9,39 @@ import { ProjectStatusChart } from "@/components/admin/dashboard/project-status-
 import { RecentProjectsTable } from "@/components/admin/dashboard/recent-projects-table";
 import { LoadingSpinner } from "@/components/admin/dashboard/loading-spinner";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { getLastDonationInfo } from "@/api/projectsApi";
 
 export default function AdminDashboardPage() {
   const { data, isLoading, refreshData } = useDashboardData();
+  
+  useEffect(() => {
+    // Update the last donation info
+    const updateLastDonationInfo = async () => {
+      try {
+        const lastDonationInfo = await getLastDonationInfo();
+        const daysElement = document.getElementById('last-donation-days');
+        const nameElement = document.getElementById('last-donor-name');
+        
+        if (daysElement && lastDonationInfo) {
+          daysElement.textContent = lastDonationInfo.daysSince > 0 
+            ? `منذ ${lastDonationInfo.daysSince} أيام` 
+            : 'اليوم';
+        }
+        
+        if (nameElement && lastDonationInfo.donorName) {
+          nameElement.textContent = `آخر متبرع: ${lastDonationInfo.donorName}`;
+        } else if (nameElement) {
+          nameElement.textContent = 'لا توجد تبرعات بعد';
+        }
+      } catch (error) {
+        console.error("Error updating last donation info:", error);
+      }
+    };
+    
+    if (!isLoading) {
+      updateLastDonationInfo();
+    }
+  }, [isLoading]);
   
   return (
     <AuthMiddleware>
