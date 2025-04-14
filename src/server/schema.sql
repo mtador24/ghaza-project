@@ -84,8 +84,34 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول إعدادات الموقع
+CREATE TABLE IF NOT EXISTS site_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value VARCHAR(255),
+  category ENUM('contact', 'social', 'general') NOT NULL DEFAULT 'general',
+  label VARCHAR(100) NOT NULL,
+  icon VARCHAR(50),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- إنشاء مستخدم أدمن افتراضي (كلمة المرور: admin123)
 -- ملاحظة: كلمة المرور هنا مشفرة بواسطة bcrypt وستحتاج لاستبدالها عند التطبيق الفعلي
 INSERT INTO users (username, password, name, role) 
 VALUES ('admin', '$2b$10$rNC7dWnP9CJKXUHKr/mEs.xiG2lxb7J0jGvFbZTrg/a2QH3tO4/9a', 'مدير النظام', 'admin')
 ON DUPLICATE KEY UPDATE username = 'admin';
+
+-- إدخال بيانات افتراضية لجدول إعدادات الموقع
+INSERT INTO site_settings (setting_key, setting_value, category, label, icon, display_order) VALUES 
+('email', 'info@gaza-aid.org', 'contact', 'البريد الإلكتروني', 'mail', 1),
+('phone', '+970 59 123 4567', 'contact', 'رقم الهاتف', 'phone', 2),
+('whatsapp', '+970 59 123 4567', 'contact', 'واتساب', 'messageCircle', 3),
+('address', 'فلسطين، غزة، الشارع الرئيسي', 'contact', 'العنوان', 'mapPin', 4),
+('facebook', 'https://facebook.com/gaza_aid', 'social', 'فيسبوك', 'facebook', 5),
+('twitter', 'https://twitter.com/gaza_aid', 'social', 'تويتر', 'twitter', 6),
+('instagram', 'https://instagram.com/gaza_aid', 'social', 'انستغرام', 'instagram', 7),
+('organization_name', 'منصة دعم غزة', 'general', 'اسم المؤسسة', 'building', 8)
+ON DUPLICATE KEY UPDATE setting_key = VALUES(setting_key);
