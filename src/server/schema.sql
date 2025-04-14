@@ -84,6 +84,29 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- جدول إعدادات الموقع
+CREATE TABLE IF NOT EXISTS site_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(50) NOT NULL UNIQUE,
+  setting_value TEXT,
+  setting_description VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- إدراج البيانات الأولية لإعدادات الموقع
+INSERT INTO site_settings (setting_key, setting_value, setting_description) VALUES
+('site_name', 'منصة دعم غزة', 'اسم الموقع'),
+('site_email', 'info@gaza-aid.org', 'البريد الإلكتروني للموقع'),
+('site_phone', '+970 59 123 4567', 'رقم الهاتف'),
+('site_whatsapp', '+970 59 123 4567', 'رقم الواتساب'),
+('site_address', 'فلسطين، غزة، الشارع الرئيسي', 'عنوان المقر'),
+('facebook_url', 'https://facebook.com/gazaaid', 'رابط صفحة فيسبوك'),
+('twitter_url', 'https://twitter.com/gazaaid', 'رابط صفحة تويتر'),
+('instagram_url', 'https://instagram.com/gazaaid', 'رابط صفحة انستجرام'),
+('youtube_url', '', 'رابط قناة يوتيوب')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
 -- إنشاء مستخدم أدمن افتراضي (كلمة المرور: admin123)
 -- ملاحظة: كلمة المرور هنا مشفرة بواسطة bcrypt وستحتاج لاستبدالها عند التطبيق الفعلي
 INSERT INTO users (username, password, name, role) 

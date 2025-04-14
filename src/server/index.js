@@ -10,6 +10,7 @@ import * as authService from './authService.js';
 import * as donorsService from './donorsService.js';
 import * as paymentMethodsService from './paymentMethodsService.js';
 import * as membersService from './membersService.js';
+import * as siteSettingsService from './siteSettingsService.js';
 import fs from 'fs';
 
 const app = express();
@@ -479,6 +480,46 @@ app.delete('/api/admin/members/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'تم حذف العضو بنجاح' });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// Site Settings endpoints
+app.get('/api/site-settings', async (req, res) => {
+  try {
+    const settings = await siteSettingsService.getAllSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/site-settings/:key', async (req, res) => {
+  try {
+    const key = req.params.key;
+    const value = await siteSettingsService.getSetting(key);
+    
+    if (value === null) {
+      return res.status(404).json({ error: 'الإعداد غير موجود' });
+    }
+    
+    res.json({ key, value });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/site-settings', authenticateToken, async (req, res) => {
+  try {
+    const settings = req.body;
+    
+    if (!settings || Object.keys(settings).length === 0) {
+      return res.status(400).json({ error: 'لم يتم توفير أي إعدادات للتحديث' });
+    }
+    
+    await siteSettingsService.updateSettings(settings);
+    res.json({ message: 'تم تحديث الإعدادات بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
