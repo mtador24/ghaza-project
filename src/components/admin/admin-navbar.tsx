@@ -1,154 +1,70 @@
 
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import {
-  LayoutDashboard,
-  ListTodo,
-  Users,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  Wallet,
-  User,
-  UserCircle
-} from "lucide-react";
-
+import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
+import { 
+  LogOut, 
+  Menu,
+  Bell,
+  Settings
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export function AdminNavbar() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [adminName, setAdminName] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Get admin name from localStorage
-    const name = localStorage.getItem("adminName");
-    if (name) {
-      setAdminName(name);
-    }
-  }, []);
-  
+
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminName");
-    toast.success("تم تسجيل الخروج بنجاح");
+    // Clear authentication
+    localStorage.removeItem("admin_token");
     navigate("/admin/login");
   };
-  
-  const navItems = [
-    { href: "/admin/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
-    { href: "/admin/projects", label: "المشاريع", icon: ListTodo },
-    { href: "/admin/donors", label: "المتبرعون", icon: Users },
-    { href: "/admin/members", label: "الأعضاء", icon: UserCircle },
-    { href: "/admin/payment-methods", label: "طرق الدفع", icon: Wallet },
-  ];
-  
-  const isActive = (path: string) => location.pathname === path;
-  
+
   return (
-    <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="container flex h-16 items-center justify-between py-4">
-        <div className="flex items-center gap-2 md:gap-4">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="pr-0">
-              <div className="px-7">
-                <Link
-                  to="/admin/dashboard"
-                  className="flex items-center gap-2 font-semibold"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span className="text-lg">لوحة الإدارة</span>
-                </Link>
-              </div>
-              <nav className="flex flex-col gap-4 mt-8 pr-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-base font-medium hover:bg-accent ${
-                      isActive(item.href) ? "bg-accent" : ""
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                ))}
-                <Button
-                  variant="ghost"
-                  className="flex w-full justify-start px-3"
-                  onClick={() => {
-                    setIsOpen(false);
-                    handleLogout();
-                  }}
-                >
-                  <LogOut className="mr-2 h-5 w-5" />
-                  تسجيل الخروج
-                </Button>
-              </nav>
-            </SheetContent>
-          </Sheet>
-          <Link
-            to="/admin/dashboard"
-            className="hidden items-center gap-2 font-semibold md:flex"
-          >
-            <span className="text-xl">لوحة الإدارة</span>
-          </Link>
-        </div>
-        <nav className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={`flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary ${
-                isActive(item.href)
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2">
-          <ThemeSwitcher />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-1">
-                <span className="hidden sm:inline-block">{adminName || "مدير"}</span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate("/admin/account")}>
-                <User className="ml-2 h-4 w-4" />
-                إعدادات الحساب
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="ml-2 h-4 w-4" />
-                تسجيل الخروج
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <header className="h-16 border-b bg-card flex items-center px-4 md:px-6">
+      <div className="flex-1 flex items-center">
+        {/* Mobile menu button is now handled in the layout component */}
+      </div>
+      
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
+          <span className="sr-only">الإشعارات</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/avatar.png" alt="الصورة الشخصية" />
+                <AvatarFallback>أع</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <div className="flex flex-col p-2">
+              <p className="text-sm font-medium">مدير النظام</p>
+              <p className="text-xs text-muted-foreground">admin@gmail.com</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/admin/account")}>
+              <Settings className="ml-2 h-4 w-4" />
+              <span>إعدادات الحساب</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="ml-2 h-4 w-4" />
+              <span>تسجيل الخروج</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -1,11 +1,26 @@
 
-export function LoadingSpinner() {
+import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+
+interface LoadingSpinnerProps {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
+  const sizeClasses = {
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
+  };
+
   return (
-    <div className="flex items-center justify-center h-96">
-      <div className="text-center">
-        <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
-        <p className="mt-4 text-lg">جاري تحميل البيانات...</p>
-      </div>
-    </div>
+    <Loader2 
+      className={cn(
+        "animate-spin text-muted-foreground", 
+        sizeClasses[size],
+        className
+      )} 
+    />
   );
 }
