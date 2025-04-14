@@ -23,7 +23,6 @@ import AdminPaymentMethodsPage from "./pages/admin/payment-methods";
 import AdminAccountPage from "./pages/admin/account";
 import AdminMembersListPage from "./pages/admin/members/index";
 import AdminMemberDetailsPage from "./pages/admin/members/[id]";
-import AdminSiteSettingsPage from "./pages/admin/site-settings";
 
 // 404 Page
 import NotFound from "./pages/NotFound";
@@ -55,7 +54,6 @@ const App = () => (
             <Route path="/admin/account" element={<AdminAccountPage />} />
             <Route path="/admin/members" element={<AdminMembersListPage />} />
             <Route path="/admin/members/:id" element={<AdminMemberDetailsPage />} />
-            <Route path="/admin/site-settings" element={<AdminSiteSettingsPage />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
