@@ -486,15 +486,7 @@ app.delete('/api/admin/members/:id', authenticateToken, async (req, res) => {
 // Site Settings endpoints
 app.get('/api/site-settings', async (req, res) => {
   try {
-    const category = req.query.category;
-    let settings;
-    
-    if (category) {
-      settings = await siteSettingsService.getSettingsByCategory(category);
-    } else {
-      settings = await siteSettingsService.getAllSettings();
-    }
-    
+    const settings = await siteSettingsService.getAllSettings();
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -503,67 +495,29 @@ app.get('/api/site-settings', async (req, res) => {
 
 app.get('/api/site-settings/:key', async (req, res) => {
   try {
-    const value = await siteSettingsService.getSettingValue(req.params.key);
+    const key = req.params.key;
+    const value = await siteSettingsService.getSetting(key);
     
     if (value === null) {
       return res.status(404).json({ error: 'الإعداد غير موجود' });
     }
     
-    res.json({ key: req.params.key, value });
+    res.json({ key, value });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.put('/api/admin/site-settings/:key', authenticateToken, async (req, res) => {
+app.put('/api/admin/site-settings', authenticateToken, async (req, res) => {
   try {
-    const { value } = req.body;
+    const settings = req.body;
     
-    await siteSettingsService.updateSetting(req.params.key, value);
-    res.json({ message: 'تم تحديث الإعداد بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/admin/site-settings', authenticateToken, async (req, res) => {
-  try {
-    const { key, value, category, label, icon, displayOrder } = req.body;
-    
-    if (!key || !category || !label) {
-      return res.status(400).json({ error: 'يرجى توفير البيانات المطلوبة' });
+    if (!settings || Object.keys(settings).length === 0) {
+      return res.status(400).json({ error: 'لم يتم توفير أي إعدادات للتحديث' });
     }
     
-    await siteSettingsService.addSetting({
-      key,
-      value,
-      category,
-      label,
-      icon,
-      displayOrder
-    });
-    
-    res.status(201).json({ message: 'تم إضافة الإعداد بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/admin/site-settings/:key', authenticateToken, async (req, res) => {
-  try {
-    await siteSettingsService.deleteSetting(req.params.key);
-    res.json({ message: 'تم حذف الإعداد بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/admin/site-settings/:key/status', authenticateToken, async (req, res) => {
-  try {
-    const { isActive } = req.body;
-    
-    await siteSettingsService.toggleSettingStatus(req.params.key, isActive);
-    res.json({ message: `تم ${isActive ? 'تفعيل' : 'تعطيل'} الإعداد بنجاح` });
+    await siteSettingsService.updateSettings(settings);
+    res.json({ message: 'تم تحديث الإعدادات بنجاح' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

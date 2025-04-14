@@ -1,88 +1,106 @@
 
 import { query } from './db.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// الحصول على جميع إعدادات الموقع
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Get all site settings
 export async function getAllSettings() {
-  const sql = `
-    SELECT * FROM site_settings
-    WHERE is_active = true
-    ORDER BY display_order ASC, category ASC
-  `;
-  
-  return await query(sql);
+  try {
+    const sql = `SELECT setting_key, setting_value, setting_description 
+                FROM site_settings`;
+    const settings = await query(sql);
+    
+    // Convert array to object with keys
+    const settingsObject = {};
+    settings.forEach(setting => {
+      settingsObject[setting.setting_key] = setting.setting_value;
+    });
+    
+    return settingsObject;
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
+    throw new Error('فشل في استرجاع إعدادات الموقع');
+  }
 }
 
-// الحصول على إعدادات حسب الفئة
-export async function getSettingsByCategory(category) {
-  const sql = `
-    SELECT * FROM site_settings
-    WHERE category = ? AND is_active = true
-    ORDER BY display_order ASC
-  `;
-  
-  return await query(sql, [category]);
+// Get a specific setting
+export async function getSetting(key) {
+  try {
+    const sql = `SELECT setting_value FROM site_settings 
+                WHERE setting_key = ?`;
+    const result = await query(sql, [key]);
+    
+    if (result.length === 0) {
+      return null;
+    }
+    
+    return result[0].setting_value;
+  } catch (error) {
+    console.error(`Error fetching setting ${key}:`, error);
+    throw new Error('فشل في استرجاع الإعداد');
+  }
 }
 
-// الحصول على قيمة إعداد محدد
-export async function getSettingValue(key) {
-  const sql = `
-    SELECT setting_value FROM site_settings
-    WHERE setting_key = ? AND is_active = true
-    LIMIT 1
-  `;
-  
-  const result = await query(sql, [key]);
-  return result.length > 0 ? result[0].setting_value : null;
-}
-
-// تحديث قيمة إعداد
+// Update a site setting
 export async function updateSetting(key, value) {
-  const sql = `
-    UPDATE site_settings
-    SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE setting_key = ?
-  `;
-  
-  return await query(sql, [value, key]);
+  try {
+    const sql = `UPDATE site_settings SET setting_value = ?, 
+                updated_at = CURRENT_TIMESTAMP
+                WHERE setting_key = ?`;
+    const result = await query(sql, [value, key]);
+    
+    if (result.affectedRows === 0) {
+      // Setting doesn't exist, insert it
+      const insertSql = `INSERT INTO site_settings 
+                        (setting_key, setting_value) 
+                        VALUES (?, ?)`;
+      await query(insertSql, [key, value]);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error updating setting ${key}:`, error);
+    throw new Error('فشل في تحديث الإعداد');
+  }
 }
 
-// إضافة إعداد جديد
-export async function addSetting(settingData) {
-  const { key, value, category, label, icon, displayOrder = 0 } = settingData;
-  
-  const sql = `
-    INSERT INTO site_settings (
-      setting_key, setting_value, category, label, icon, display_order
-    ) VALUES (?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-      setting_value = VALUES(setting_value),
-      category = VALUES(category),
-      label = VALUES(label),
-      icon = VALUES(icon),
-      display_order = VALUES(display_order),
-      updated_at = CURRENT_TIMESTAMP
-  `;
-  
-  return await query(sql, [key, value, category, label, icon, displayOrder]);
+// Update multiple settings at once
+export async function updateSettings(settings) {
+  try {
+    // Use a transaction for multiple updates
+    const connection = await query('START TRANSACTION');
+    
+    for (const [key, value] of Object.entries(settings)) {
+      const sql = `UPDATE site_settings SET setting_value = ?, 
+                  updated_at = CURRENT_TIMESTAMP
+                  WHERE setting_key = ?`;
+      const result = await query(sql, [value, key]);
+      
+      if (result.affectedRows === 0) {
+        // Setting doesn't exist, insert it
+        const insertSql = `INSERT INTO site_settings 
+                          (setting_key, setting_value) 
+                          VALUES (?, ?)`;
+        await query(insertSql, [key, value]);
+      }
+    }
+    
+    await query('COMMIT');
+    return true;
+  } catch (error) {
+    await query('ROLLBACK');
+    console.error('Error updating multiple settings:', error);
+    throw new Error('فشل في تحديث الإعدادات');
+  }
 }
 
-// حذف إعداد
-export async function deleteSetting(key) {
-  const sql = `
-    DELETE FROM site_settings
-    WHERE setting_key = ?
-  `;
-  
-  return await query(sql, [key]);
-}
-
-// تغيير حالة تفعيل الإعداد
-export async function toggleSettingStatus(key, isActive) {
-  const sql = `
-    UPDATE site_settings
-    SET is_active = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE setting_key = ?
-  `;
-  
-  return await query(sql, [isActive, key]);
-}
+export default {
+  getAllSettings,
+  getSetting,
+  updateSetting,
+  updateSettings
+};

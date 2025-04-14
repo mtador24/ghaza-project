@@ -1,231 +1,164 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  BarChart3,
-  CircleDollarSign,
-  CreditCard,
-  FileText,
-  LogOut,
-  Menu,
-  Settings,
-  UserCircle,
-  Users,
+import { useLocation, Link } from "react-router-dom";
+import { AdminNavbar } from "./admin-navbar";
+import { AuthMiddleware } from "./auth-middleware";
+import { 
+  LayoutDashboard, 
+  FolderOpen, 
+  Users, 
+  CreditCard, 
+  UserCog, 
+  LogOut, 
+  ChevronLeft, 
+  ChevronRight,
+  Settings
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useMobile } from "@/hooks/use-mobile";
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
+const menuItems = [
+  { label: "لوحة التحكم", icon: <LayoutDashboard className="ml-2" size={18} />, link: "/admin/dashboard" },
+  { label: "المشاريع", icon: <FolderOpen className="ml-2" size={18} />, link: "/admin/projects" },
+  { label: "المتبرعين", icon: <Users className="ml-2" size={18} />, link: "/admin/donors" },
+  { label: "طرق الدفع", icon: <CreditCard className="ml-2" size={18} />, link: "/admin/payment-methods" },
+  { label: "الأعضاء", icon: <Users className="ml-2" size={18} />, link: "/admin/members" },
+  { label: "إعدادات الموقع", icon: <Settings className="ml-2" size={18} />, link: "/admin/site-settings" },
+  { label: "إعدادات الحساب", icon: <UserCog className="ml-2" size={18} />, link: "/admin/account" },
+];
 
-// تعريف عنصر القائمة
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [token, setToken] = useState<string | null>(null);
-  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const isMobile = useMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // التحقق من وجود توكن المستخدم
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (!storedToken) {
-      navigate("/admin/login", { replace: true });
-    } else {
-      setToken(storedToken);
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/admin/login", { replace: true });
-  };
-
-  // قائمة روابط لوحة التحكم
-  const navItems: NavItem[] = [
-    {
-      title: "لوحة التحكم",
-      href: "/admin/dashboard",
-      icon: <BarChart3 className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "المشاريع",
-      href: "/admin/projects",
-      icon: <FileText className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "المتبرعين",
-      href: "/admin/donors",
-      icon: <CircleDollarSign className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "طرق الدفع",
-      href: "/admin/payment-methods",
-      icon: <CreditCard className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "الأعضاء",
-      href: "/admin/members",
-      icon: <Users className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "إعدادات الموقع",
-      href: "/admin/site-settings",
-      icon: <Settings className="ml-2 h-5 w-5" />,
-    },
-    {
-      title: "حسابي",
-      href: "/admin/account",
-      icon: <UserCircle className="ml-2 h-5 w-5" />,
-    },
-  ];
-
-  const openMobileMenu = () => {
-    setMobileMenuOpen(true);
-  };
-
-  // إذا لم يكن هناك توكن، لا تعرض أي شيء حتى يتم توجيه المستخدم إلى صفحة تسجيل الدخول
-  if (!token) {
-    return null;
-  }
-
-  return (
-    <div className="grid min-h-screen w-full md:grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr]">
-      {/* sidebar desktop */}
-      {!isMobile && (
-        <div className="hidden border-l md:block">
-          <AdminSidebar
-            navItems={navItems}
-            currentPath={location.pathname}
-            onLogout={() => setLogoutDialogOpen(true)}
-          />
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+  
+  const Sidebar = () => (
+    <aside className={`h-screen bg-card overflow-y-auto ${sidebarCollapsed ? 'w-16' : 'w-64'} hidden md:block border-l`}>
+      <div className="h-full flex flex-col">
+        <div className="px-4 py-6 flex items-center justify-between">
+          {!sidebarCollapsed && (
+            <h2 className="text-lg font-bold">
+              لوحة الإدارة
+            </h2>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hover:bg-muted"
+          >
+            {sidebarCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+          </Button>
         </div>
-      )}
-
-      {/* mobile menu button */}
-      {isMobile && (
-        <div className="fixed top-4 right-4 z-50">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setMobileMenuOpen(true)}
-                className="bg-background border border-input"
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">فتح القائمة</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="p-0">
-              <AdminSidebar
-                navItems={navItems}
-                currentPath={location.pathname}
-                onLogout={() => setLogoutDialogOpen(true)}
-                onItemClick={() => setMobileMenuOpen(false)}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
-      )}
-
-      {/* main content */}
-      <div className="flex flex-col">
-        <main className="flex-1">{children}</main>
-      </div>
-
-      {/* logout dialog */}
-      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>تسجيل الخروج</AlertDialogTitle>
-            <AlertDialogDescription>
-              هل أنت متأكد من رغبتك في تسجيل الخروج من لوحة التحكم؟
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout}>
-              تسجيل الخروج
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
-
-interface AdminSidebarProps {
-  navItems: NavItem[];
-  currentPath: string;
-  onLogout: () => void;
-  onItemClick?: () => void;
-}
-
-function AdminSidebar({
-  navItems,
-  currentPath,
-  onLogout,
-  onItemClick,
-}: AdminSidebarProps) {
-  return (
-    <ScrollArea className="h-full py-6 pl-4">
-      <div className="flex flex-col h-full">
-        <div className="mb-8 pr-6">
-          <h2 className="text-lg font-semibold">لوحة إدارة منصة دعم غزة</h2>
-        </div>
-        <nav className="grid gap-2 pr-4">
-          {navItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.href}
-              onClick={onItemClick}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-base transition-all ${
-                currentPath === item.href
-                  ? "bg-gaza-primary/10 text-gaza-primary font-medium"
-                  : "text-foreground/70 hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {item.icon}
-              {item.title}
-            </Link>
-          ))}
+        
+        <Separator />
+        
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {menuItems.map((item, index) => {
+              const isActive = location.pathname === item.link;
+              return (
+                <li key={index}>
+                  <Link
+                    to={item.link}
+                    className={`
+                      flex items-center px-3 py-2 rounded-md transition-colors
+                      ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                      ${sidebarCollapsed ? 'justify-center' : ''}
+                    `}
+                  >
+                    {item.icon}
+                    {!sidebarCollapsed && <span>{item.label}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
-        <Separator className="my-4" />
-        <Button
-          onClick={onLogout}
-          variant="ghost"
-          className="flex items-center gap-2 pr-4 justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-          <LogOut className="ml-2 h-5 w-5" />
-          تسجيل الخروج
-        </Button>
-        <div className="mt-auto pr-4 py-4 text-xs text-muted-foreground">
-          منصة دعم غزة &copy; 2025
+        
+        <div className="p-4">
+          <Link
+            to="/admin/logout"
+            className="flex items-center px-3 py-2 text-destructive rounded-md transition-colors hover:bg-muted"
+          >
+            <LogOut className="ml-2" size={18} />
+            {!sidebarCollapsed && <span>تسجيل الخروج</span>}
+          </Link>
         </div>
       </div>
-    </ScrollArea>
+    </aside>
+  );
+  
+  const MobileMenu = () => (
+    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" className="md:hidden">
+          <span>القائمة</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[80%]">
+        <div className="py-6">
+          <h2 className="text-lg font-bold mb-4">
+            لوحة الإدارة
+          </h2>
+          <Separator />
+          <nav className="mt-4">
+            <ul className="space-y-2">
+              {menuItems.map((item, index) => {
+                const isActive = location.pathname === item.link;
+                return (
+                  <li key={index}>
+                    <Link
+                      to={item.link}
+                      className={`
+                        flex items-center px-3 py-2 rounded-md transition-colors
+                        ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                      `}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+              <li>
+                <Link
+                  to="/admin/logout"
+                  className="flex items-center px-3 py-2 text-destructive rounded-md transition-colors hover:bg-muted"
+                >
+                  <LogOut className="ml-2" size={18} />
+                  <span>تسجيل الخروج</span>
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+  
+  return (
+    <AuthMiddleware>
+      <div className="h-screen flex flex-col md:flex-row">
+        <Sidebar />
+        <div className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
+          <AdminNavbar openMobileMenu={() => setMobileMenuOpen(true)} />
+          <main className="min-h-[calc(100vh-64px)]">
+            {children}
+          </main>
+        </div>
+      </div>
+    </AuthMiddleware>
   );
 }

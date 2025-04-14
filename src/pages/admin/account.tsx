@@ -1,107 +1,202 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { AuthMiddleware } from "@/components/admin/auth-middleware";
+import { AdminNavbar } from "@/components/admin/admin-navbar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import AdminLayout from "@/components/admin/layout";
-import { Facebook, Mail, MessageCircle, Twitter, Instagram, Linkedin, Youtube } from "lucide-react";
-import { useSiteSettings } from "@/hooks/use-site-settings";
-import { useToast } from "@/hooks/use-toast";
+import { getAdminProfile, updateAdminProfile } from "@/api/adminApi";
 
-export default function AccountPage() {
-  const { toast } = useToast();
-  const { contactSettings, socialSettings, getValue } = useSiteSettings();
+type ProfileFormValues = {
+  name: string;
+  email: string;
+};
+
+type PasswordFormValues = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export default function AdminAccountPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<ProfileFormValues | null>(null);
   
-  // Extract specific contact and social media details
-  const email = getValue('email') || '';
-  const whatsapp = getValue('whatsapp') || '';
+  const profileForm = useForm<ProfileFormValues>({
+    defaultValues: {
+      name: "",
+      email: "",
+    }
+  });
   
-  // Social media links
-  const socialLinks = {
-    facebook: getValue('facebook') || '',
-    twitter: getValue('twitter') || '',
-    instagram: getValue('instagram') || '',
-    linkedin: getValue('linkedin') || '',
-    youtube: getValue('youtube') || '',
+  const passwordForm = useForm<PasswordFormValues>({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    }
+  });
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAdminProfile();
+        if (data) {
+          setProfile(data);
+          profileForm.reset({
+            name: data.name,
+            email: data.email,
+          });
+        }
+      } catch (error) {
+        toast.error("حدث خطأ أثناء تحميل بيانات الحساب");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, []);
+  
+  const onUpdateProfile = async (data: ProfileFormValues) => {
+    try {
+      await updateAdminProfile(data);
+      toast.success("تم تحديث بيانات الحساب بنجاح");
+      localStorage.setItem("adminName", data.name);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "حدث خطأ أثناء تحديث بيانات الحساب");
+    }
   };
-
-  // Social media icon mapping
-  const socialIcons = {
-    facebook: Facebook,
-    twitter: Twitter,
-    instagram: Instagram,
-    linkedin: Linkedin,
-    youtube: Youtube,
+  
+  const onUpdatePassword = async (data: PasswordFormValues) => {
+    if (data.newPassword !== data.confirmPassword) {
+      toast.error("كلمة المرور الجديدة وتأكيدها غير متطابقين");
+      return;
+    }
+    
+    try {
+      await updateAdminProfile({
+        name: profile?.name || "",
+        email: profile?.email || "",
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      
+      toast.success("تم تحديث كلمة المرور بنجاح");
+      passwordForm.reset();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "حدث خطأ أثناء تحديث كلمة المرور");
+    }
   };
-
+  
   return (
-    <AdminLayout>
-      <div className="gaza-container py-10">
-        <h1 className="text-3xl font-bold mb-6">إعدادات الحساب</h1>
+    <AuthMiddleware>
+      <div className="flex flex-col min-h-screen">
+        <AdminNavbar />
         
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Contact Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">معلومات التواصل</h2>
-            <div className="space-y-4 bg-muted p-6 rounded-lg">
-              {email && (
-                <div className="flex items-center">
-                  <Mail className="ml-3 text-gaza-primary" />
-                  <div>
-                    <Label>البريد الإلكتروني</Label>
-                    <p>{email}</p>
-                  </div>
-                </div>
-              )}
-              
-              {whatsapp && (
-                <div className="flex items-center">
-                  <MessageCircle className="ml-3 text-gaza-primary" />
-                  <div>
-                    <Label>رقم الواتساب</Label>
-                    <p>{whatsapp}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+        <main className="flex-grow p-4 md:p-6">
+          <div className="mx-auto max-w-4xl">
+            <h1 className="mb-6 text-2xl font-bold">إعدادات الحساب</h1>
+            
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <div className="border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Personal Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>المعلومات الشخصية</CardTitle>
+                    <CardDescription>
+                      قم بتعديل معلوماتك الشخصية هنا
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={profileForm.handleSubmit(onUpdateProfile)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">الاسم</Label>
+                        <Input
+                          id="name"
+                          {...profileForm.register("name")}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">البريد الإلكتروني</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          {...profileForm.register("email")}
+                          required
+                        />
+                      </div>
+                      
+                      <Button type="submit" className="w-full md:w-auto">
+                        حفظ التغييرات
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+                
+                {/* Password Update */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>تغيير كلمة المرور</CardTitle>
+                    <CardDescription>
+                      قم بتحديث كلمة المرور الخاصة بك بانتظام للحفاظ على أمان حسابك
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={passwordForm.handleSubmit(onUpdatePassword)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          {...passwordForm.register("currentPassword")}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          {...passwordForm.register("newPassword")}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          {...passwordForm.register("confirmPassword")}
+                          required
+                        />
+                      </div>
+                      
+                      <Button type="submit" className="w-full md:w-auto">
+                        تغيير كلمة المرور
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
-
-          {/* Social Media Links Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">وسائل التواصل الاجتماعي</h2>
-            <div className="space-y-4 bg-muted p-6 rounded-lg">
-              {Object.entries(socialLinks).map(([platform, link]) => {
-                if (!link) return null;
-                const Icon = socialIcons[platform as keyof typeof socialIcons];
-                return (
-                  <div key={platform} className="flex items-center">
-                    <Icon className="ml-3 text-gaza-primary" />
-                    <div>
-                      <Label>{platform.charAt(0).toUpperCase() + platform.slice(1)}</Label>
-                      <a 
-                        href={link} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-primary hover:underline"
-                      >
-                        {link}
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* Placeholder for future account settings */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">إعدادات الحساب</h2>
-          {/* Future account settings will be added here */}
-        </div>
+        </main>
       </div>
-    </AdminLayout>
+    </AuthMiddleware>
   );
 }

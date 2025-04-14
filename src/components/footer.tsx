@@ -1,31 +1,37 @@
 
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Phone, Heart, Facebook, Twitter, Instagram, MessageCircle } from "lucide-react";
-import { useSiteSettings } from "@/hooks/use-site-settings";
+import { Heart, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import { SiteSettings, getSiteSettings } from "@/api/siteSettingsApi";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const { contactSettings, socialSettings, getValue, loading } = useSiteSettings();
+  const [settings, setSettings] = useState<SiteSettings>({});
+  const [loading, setLoading] = useState(true);
 
-  // الحصول على اسم المؤسسة من الإعدادات العامة
-  const organizationName = getValue('organization_name') || 'منصة دعم غزة';
-
-  // رسم أيقونة مناسبة لكل وسيلة تواصل اجتماعي
-  const getSocialIcon = (key: string) => {
-    switch (key) {
-      case 'facebook': return <Facebook size={18} className="ml-2" />;
-      case 'twitter': return <Twitter size={18} className="ml-2" />;
-      case 'instagram': return <Instagram size={18} className="ml-2" />;
-      default: return null;
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const data = await getSiteSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Error loading site settings:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+    
+    loadSettings();
+  }, []);
 
   return (
     <footer className="bg-muted text-muted-foreground mt-20">
       <div className="gaza-container py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-bold text-foreground mb-4">{organizationName}</h3>
+            <h3 className="text-lg font-bold text-foreground mb-4">
+              {settings.site_name || "منصة دعم غزة"}
+            </h3>
             <p className="mb-4">
               منصة خيرية مخصصة لدعم أهل غزة في وقت الأزمات. نعمل على توصيل المساعدات الإنسانية لمن يحتاجها.
             </p>
@@ -59,97 +65,71 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-bold text-foreground mb-4">معلومات الاتصال</h3>
             <div className="space-y-3">
-              {/* عرض معلومات الاتصال من قاعدة البيانات */}
-              {loading ? (
-                <p>جاري تحميل البيانات...</p>
-              ) : (
-                <>
-                  {contactSettings.map((setting) => (
-                    <ContactItem 
-                      key={setting.id} 
-                      type={setting.setting_key} 
-                      value={setting.setting_value || ''} 
-                    />
-                  ))}
-                </>
+              {settings.site_address && (
+                <div className="flex items-start">
+                  <MapPin size={18} className="ml-2 mt-1 text-gaza-primary" />
+                  <span>{settings.site_address}</span>
+                </div>
+              )}
+              
+              {settings.site_phone && (
+                <div className="flex items-center">
+                  <Phone size={18} className="ml-2 text-gaza-primary" />
+                  <span>{settings.site_phone}</span>
+                </div>
+              )}
+              
+              {settings.site_email && (
+                <div className="flex items-center">
+                  <Mail size={18} className="ml-2 text-gaza-primary" />
+                  <a href={`mailto:${settings.site_email}`} className="hover:text-gaza-primary transition-colors">
+                    {settings.site_email}
+                  </a>
+                </div>
+              )}
+              
+              {/* Social Media Links */}
+              {(settings.facebook_url || settings.twitter_url || settings.instagram_url || settings.youtube_url) && (
+                <div className="flex items-center space-x-3 space-x-reverse pt-2">
+                  {settings.facebook_url && (
+                    <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" 
+                       className="bg-muted-foreground/10 p-2 rounded-full hover:bg-gaza-primary/20 transition-colors">
+                      <Facebook size={16} className="text-gaza-primary" />
+                    </a>
+                  )}
+                  
+                  {settings.twitter_url && (
+                    <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer"
+                       className="bg-muted-foreground/10 p-2 rounded-full hover:bg-gaza-primary/20 transition-colors">
+                      <Twitter size={16} className="text-gaza-primary" />
+                    </a>
+                  )}
+                  
+                  {settings.instagram_url && (
+                    <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer"
+                       className="bg-muted-foreground/10 p-2 rounded-full hover:bg-gaza-primary/20 transition-colors">
+                      <Instagram size={16} className="text-gaza-primary" />
+                    </a>
+                  )}
+                  
+                  {settings.youtube_url && (
+                    <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer"
+                       className="bg-muted-foreground/10 p-2 rounded-full hover:bg-gaza-primary/20 transition-colors">
+                      <Youtube size={16} className="text-gaza-primary" />
+                    </a>
+                  )}
+                </div>
               )}
             </div>
-
-            {/* عرض وسائل التواصل الاجتماعي */}
-            {socialSettings.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-base font-medium text-foreground mb-2">تابعنا على</h4>
-                <div className="flex space-x-3 space-x-reverse">
-                  {socialSettings.map((social) => (
-                    <a 
-                      key={social.id}
-                      href={social.setting_value || '#'} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="hover:text-gaza-primary transition-colors"
-                    >
-                      {getSocialIcon(social.setting_key)}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         <div className="border-t mt-8 pt-6 text-center">
           <p>
-            جميع الحقوق محفوظة © {currentYear} {organizationName}
+            جميع الحقوق محفوظة © {currentYear} {settings.site_name || "منصة دعم غزة"}
           </p>
         </div>
       </div>
     </footer>
-  );
-}
-
-type ContactItemProps = {
-  type: string;
-  value: string;
-};
-
-function ContactItem({ type, value }: ContactItemProps) {
-  let icon;
-  let isLink = false;
-  let href = '';
-
-  switch (type) {
-    case 'email':
-      icon = <Mail size={18} className="ml-2 text-gaza-primary" />;
-      isLink = true;
-      href = `mailto:${value}`;
-      break;
-    case 'phone':
-      icon = <Phone size={18} className="ml-2 text-gaza-primary" />;
-      isLink = true;
-      href = `tel:${value}`;
-      break;
-    case 'whatsapp':
-      icon = <MessageCircle size={18} className="ml-2 text-gaza-primary" />;
-      isLink = true;
-      href = `https://wa.me/${value.replace(/[^0-9]/g, '')}`;
-      break;
-    case 'address':
-      icon = <MapPin size={18} className="ml-2 mt-1 text-gaza-primary" />;
-      break;
-    default:
-      icon = null;
-  }
-
-  return (
-    <div className="flex items-start">
-      {icon}
-      {isLink ? (
-        <a href={href} className="hover:text-gaza-primary transition-colors">
-          {value}
-        </a>
-      ) : (
-        <span>{value}</span>
-      )}
-    </div>
   );
 }
