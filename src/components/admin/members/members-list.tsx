@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -151,7 +150,7 @@ export function MembersList({ members, onSearch, onRefresh, isLoading }: Members
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={member.isActive ? "success" : "destructive"}
+                      variant={member.isActive ? "default" : "destructive"}
                       className="capitalize"
                     >
                       {member.isActive ? "مفعل" : "معطل"}

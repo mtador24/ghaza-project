@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -167,7 +166,7 @@ export function MemberDetails() {
           <CardContent className="space-y-4">
             <div className="flex justify-end">
               <Badge
-                variant={member.isActive ? "success" : "destructive"}
+                variant={member.isActive ? "default" : "destructive"}
                 className="capitalize"
               >
                 {member.isActive ? "مفعل" : "معطل"}
