@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,8 @@ import { getProjects, getLatestDonations, getDonationStats } from "@/api/project
 import { Heart, ArrowLeft, CreditCard } from "lucide-react";
 
 export default function HomePage() {
-  const [projects, setProjects] = useState([]);
-  const [recentDonors, setRecentDonors] = useState([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [recentDonors, setRecentDonors] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalDonations: 0, totalDonors: 0, activeProjects: 0 });
   const [loading, setLoading] = useState(true);
   
@@ -26,21 +27,43 @@ export default function HomePage() {
           getDonationStats()
         ]);
         
-        setProjects(projectsData);
+        // Ensure projectsData is an array
+        if (Array.isArray(projectsData)) {
+          setProjects(projectsData);
+        } else {
+          console.error("Projects data is not an array:", projectsData);
+          setProjects([]);
+        }
         
-        // Transform donors data
-        const transformedDonors = donorsData.map(donor => ({
-          id: donor.id,
-          name: donor.donor_name,
-          amount: donor.amount,
-          date: donor.donation_date,
-          message: donor.notes || null
-        }));
+        // Ensure donorsData is an array before transforming
+        if (Array.isArray(donorsData)) {
+          // Transform donors data
+          const transformedDonors = donorsData.map(donor => ({
+            id: donor.id,
+            name: donor.donor_name,
+            amount: donor.amount,
+            date: donor.donation_date,
+            message: donor.notes || null
+          }));
+          
+          setRecentDonors(transformedDonors);
+        } else {
+          console.error("Donors data is not an array:", donorsData);
+          setRecentDonors([]);
+        }
         
-        setRecentDonors(transformedDonors);
-        setStats(statsData);
+        // Ensure statsData is an object
+        if (statsData && typeof statsData === 'object') {
+          setStats(statsData);
+        } else {
+          console.error("Stats data is not an object:", statsData);
+          setStats({ totalDonations: 0, totalDonors: 0, activeProjects: 0 });
+        }
       } catch (error) {
         console.error("Error fetching home data:", error);
+        setProjects([]);
+        setRecentDonors([]);
+        setStats({ totalDonations: 0, totalDonors: 0, activeProjects: 0 });
       } finally {
         setLoading(false);
       }
@@ -49,11 +72,14 @@ export default function HomePage() {
     fetchData();
   }, []);
   
-  // Filter active projects
-  const activeProjects = projects.filter(project => project.is_active);
+  // Filter active projects safely
+  const activeProjects = Array.isArray(projects) 
+    ? projects.filter(project => project && project.is_active) 
+    : [];
+    
   const featuredProject = activeProjects.length > 0 ? activeProjects[0] : null;
   
-  // Transform featured project for components
+  // Transform featured project for components safely
   const featuredProjectImages: SliderImage[] = featuredProject ? 
     [{ 
       id: 1, 
@@ -171,11 +197,15 @@ export default function HomePage() {
                 <div className="inline-block border-4 border-t-gaza-primary border-r-gaza-primary border-b-muted border-l-muted rounded-full w-12 h-12 animate-spin"></div>
                 <p className="mt-4">جاري تحميل المشاريع...</p>
               </div>
-            ) : (
+            ) : activeProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {activeProjects.slice(0, 3).map((project) => (
                   <ProjectCard key={project.id} project={project} />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p>لا توجد مشاريع نشطة حالياً</p>
               </div>
             )}
           </div>

@@ -23,9 +23,22 @@ export function PaymentMethodsList() {
       try {
         setLoading(true);
         const response = await axios.get("/api/payment-methods");
-        setPaymentMethods(response.data);
+        
+        // Ensure response.data is an array
+        if (Array.isArray(response.data)) {
+          setPaymentMethods(response.data);
+        } else {
+          console.error("Payment methods response is not an array:", response.data);
+          setPaymentMethods([]);
+          toast({
+            title: "خطأ في تحميل طرق الدفع",
+            description: "تنسيق البيانات المستلمة غير صحيح",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error("Error fetching payment methods:", error);
+        setPaymentMethods([]);
         toast({
           title: "خطأ في تحميل طرق الدفع",
           description: "حدث خطأ أثناء محاولة تحميل بيانات طرق الدفع",
