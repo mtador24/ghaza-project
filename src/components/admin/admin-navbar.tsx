@@ -10,7 +10,9 @@ import {
   Menu,
   X,
   ChevronDown,
-  Wallet
+  Wallet,
+  User,
+  UserCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,7 @@ export function AdminNavbar() {
     { href: "/admin/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
     { href: "/admin/projects", label: "المشاريع", icon: ListTodo },
     { href: "/admin/donors", label: "المتبرعون", icon: Users },
+    { href: "/admin/members", label: "الأعضاء", icon: UserCircle },
     { href: "/admin/payment-methods", label: "طرق الدفع", icon: Wallet },
   ];
   
@@ -135,6 +138,10 @@ export function AdminNavbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/admin/account")}>
+                <User className="ml-2 h-4 w-4" />
+                إعدادات الحساب
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="ml-2 h-4 w-4" />
                 تسجيل الخروج

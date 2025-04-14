@@ -87,3 +87,38 @@ export async function changePassword(userId, currentPassword, newPassword) {
   
   return { success: true, message: 'تم تغيير كلمة المرور بنجاح' };
 }
+
+// Get admin profile information
+export async function getAdminProfile(userId) {
+  const users = await query(
+    `SELECT id, username, name, email FROM users WHERE id = ? AND role = 'admin'`,
+    [userId]
+  );
+  
+  if (users.length === 0) {
+    throw new Error('المستخدم غير موجود');
+  }
+  
+  return users[0];
+}
+
+// Update admin profile information
+export async function updateAdminProfile(userId, { name, email }) {
+  // Check if admin exists
+  const users = await query(
+    `SELECT id FROM users WHERE id = ? AND role = 'admin'`,
+    [userId]
+  );
+  
+  if (users.length === 0) {
+    throw new Error('المستخدم غير موجود');
+  }
+  
+  // Update profile info
+  await query(
+    `UPDATE users SET name = ?, email = ? WHERE id = ?`,
+    [name, email, userId]
+  );
+  
+  return { success: true };
+}

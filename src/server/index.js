@@ -9,6 +9,7 @@ import * as donationsService from './donationsService.js';
 import * as authService from './authService.js';
 import * as donorsService from './donorsService.js';
 import * as paymentMethodsService from './paymentMethodsService.js';
+import * as membersService from './membersService.js';
 import fs from 'fs';
 
 const app = express();
@@ -394,6 +395,90 @@ app.delete('/api/admin/payment-methods/:id', authenticateToken, async (req, res)
     res.json({ message: 'تم حذف طريقة الدفع بنجاح' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin Profile endpoints
+app.get('/api/admin/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const profile = await authService.getAdminProfile(userId);
+    res.json(profile);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, email, currentPassword, newPassword } = req.body;
+    
+    if (currentPassword && newPassword) {
+      // Updating password
+      const result = await authService.changePassword(userId, currentPassword, newPassword);
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+    }
+    
+    // Update profile info
+    await authService.updateAdminProfile(userId, { name, email });
+    
+    res.json({ message: 'تم تحديث الملف الشخصي بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Members endpoints
+app.get('/api/admin/members', authenticateToken, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    
+    const result = await membersService.getMembers(page, limit, search);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/members/:id', authenticateToken, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    const member = await membersService.getMemberDetails(memberId);
+    
+    if (!member) {
+      return res.status(404).json({ error: 'العضو غير موجود' });
+    }
+    
+    res.json(member);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admin/members/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    const { isActive } = req.body;
+    
+    await membersService.updateMemberStatus(memberId, isActive);
+    res.json({ message: `تم ${isActive ? 'تفعيل' : 'تعطيل'} العضو بنجاح` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admin/members/:id', authenticateToken, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    await membersService.deleteMember(memberId);
+    res.json({ message: 'تم حذف العضو بنجاح' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 

@@ -20,6 +20,9 @@ import AdminProjectsListPage from "./pages/admin/projects";
 import CreateProjectPage from "./pages/admin/projects/create";
 import AdminDonorsListPage from "./pages/admin/donors";
 import AdminPaymentMethodsPage from "./pages/admin/payment-methods";
+import AdminAccountPage from "./pages/admin/account";
+import AdminMembersListPage from "./pages/admin/members/index";
+import AdminMemberDetailsPage from "./pages/admin/members/[id]";
 
 // 404 Page
 import NotFound from "./pages/NotFound";
@@ -48,6 +51,9 @@ const App = () => (
             <Route path="/admin/projects/create" element={<CreateProjectPage />} />
             <Route path="/admin/donors" element={<AdminDonorsListPage />} />
             <Route path="/admin/payment-methods" element={<AdminPaymentMethodsPage />} />
+            <Route path="/admin/account" element={<AdminAccountPage />} />
+            <Route path="/admin/members" element={<AdminMembersListPage />} />
+            <Route path="/admin/members/:id" element={<AdminMemberDetailsPage />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
